@@ -49,7 +49,23 @@ Temporal Halo uses OpenClaw’s built-in cron scheduler (no OS cron). Any cron m
 
 Recommended: create a repeating **main-session system event** job (every 30 minutes). This keeps dream runs aligned with your main agent context and avoids isolated-session drift. Keep the event text short: the plugin injects the detailed dream instructions automatically.
 
-Dream execution is subagent-first: the main session acts as an orchestrator and should immediately delegate the actual dream work to a spawned subagent. Because of that, a one-off cron trigger can return before `HALO.md` is fully updated.
+Dream execution is map/reduce and subagent-first: the main session acts as an orchestrator, fans out focused worker subagents (calendar/email/messages), then fans in concise worker results before publishing `HALO.md`. Because of that, a one-off cron trigger can return before `HALO.md` is fully updated.
+
+Optional (recommended for deeper fan-out): enable nested subagents in OpenClaw so a dream orchestrator can spawn worker subagents.
+
+```json5
+{
+  agents: {
+    defaults: {
+      subagents: {
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 5,
+        maxConcurrent: 8,
+      },
+    },
+  },
+}
+```
 
 ```bash
 openclaw cron add \

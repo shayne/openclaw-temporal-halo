@@ -12,16 +12,17 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain("You MUST call `temporal_halo_publish`")
 	})
 
-	it("requires subagent delegation before doing dream retrieval", () => {
+	it("requires map/reduce fan-out with worker budgets before publish", () => {
 		const cfg = parseConfig({})
 		const instructions = buildDreamInstructions(cfg)
 
-		expect(instructions).toContain("Execution contract:")
+		expect(instructions).toContain("Execution contract (MUST):")
 		expect(instructions).toContain(
-			"You MUST call `sessions_spawn` before any source retrieval.",
+			"MAP: fan out with `sessions_spawn` into focused workers",
 		)
+		expect(instructions).toContain("max 15 bullets and <=3000 chars per worker")
 		expect(instructions).toContain(
-			"If `sessions_spawn` is unavailable/forbidden/fails",
+			"Do not call `temporal_halo_publish` until fan-in synthesis is complete.",
 		)
 	})
 
