@@ -47,15 +47,15 @@ Example:
 
 Temporal Halo uses OpenClaw’s built-in cron scheduler (no OS cron). Any cron message that contains the marker (default `[temporal-halo:dream]`) will run in “dream mode” and refresh `HALO.md`.
 
-Example: create a repeating isolated job (every 30 minutes). Keep the cron message short: the plugin injects the detailed dream instructions automatically.
+Recommended: create a repeating **main-session system event** job (every 30 minutes). This keeps dream runs aligned with your main agent context and avoids isolated-session drift. Keep the event text short: the plugin injects the detailed dream instructions automatically.
 
 ```bash
 openclaw cron add \
   --name "Temporal Halo: Dream" \
   --every "30m" \
-  --session isolated \
-  --no-deliver \
-  --message "[temporal-halo:dream] Refresh HALO.md."
+  --session main \
+  --wake now \
+  --system-event "[temporal-halo:dream] Refresh HALO.md from calendar, email, messages, and recent conversations."
 ```
 
 ## What Dreaming Will Try To Pull In
