@@ -49,6 +49,8 @@ Temporal Halo uses OpenClaw’s built-in cron scheduler (no OS cron). Any cron m
 
 Recommended: create a repeating **main-session system event** job (every 30 minutes). This keeps dream runs aligned with your main agent context and avoids isolated-session drift. Keep the event text short: the plugin injects the detailed dream instructions automatically.
 
+Dream execution is subagent-first: the main session acts as an orchestrator and should immediately delegate the actual dream work to a spawned subagent. Because of that, a one-off cron trigger can return before `HALO.md` is fully updated.
+
 ```bash
 openclaw cron add \
   --name "Temporal Halo: Dream" \

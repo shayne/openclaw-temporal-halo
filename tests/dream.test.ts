@@ -9,7 +9,20 @@ describe("buildDreamInstructions", () => {
 
 		expect(instructions).toContain("A scheduled reminder has been triggered")
 		expect(instructions).toContain("Do not send a reminder-style reply")
-		expect(instructions).toContain("You must call `temporal_halo_publish`")
+		expect(instructions).toContain("You MUST call `temporal_halo_publish`")
+	})
+
+	it("requires subagent delegation before doing dream retrieval", () => {
+		const cfg = parseConfig({})
+		const instructions = buildDreamInstructions(cfg)
+
+		expect(instructions).toContain("Execution contract:")
+		expect(instructions).toContain(
+			"You MUST call `sessions_spawn` before any source retrieval.",
+		)
+		expect(instructions).toContain(
+			"If `sessions_spawn` is unavailable/forbidden/fails",
+		)
 	})
 
 	it("uses positive MUST-based steering with a strict output template", () => {
