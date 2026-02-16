@@ -42,6 +42,12 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain(
 			"For SMS/RCS/iMessage identifiers, resolve phone numbers/chat handles to contact names when possible",
 		)
+		expect(instructions).toContain(
+			"For email, prefer coverage across Inbox, Archive/All Mail, and Trash when tools support folder/label scoping",
+		)
+		expect(instructions).toContain(
+			"Treat Trash as lower-priority signal, but still include high-value facts that affect user commitments",
+		)
 	})
 })
 

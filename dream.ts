@@ -53,6 +53,8 @@ export function buildDreamInstructions(cfg: TemporalHaloConfig): string {
 		"Content rules:",
 		"- Every bullet MUST be a real life fact (who/what/when/where and identifiers when useful).",
 		"- Add short inline source hints on each real-world bullet (email thread, calendar event id/title, message chat/person, task/doc reference).",
+		"- For email, prefer coverage across Inbox, Archive/All Mail, and Trash when tools support folder/label scoping.",
+		"- Treat Trash as lower-priority signal, but still include high-value facts that affect user commitments.",
 		"- For SMS/RCS/iMessage identifiers, resolve phone numbers/chat handles to contact names when possible.",
 		"- Focus on real-world user context, not operational/plugin/runtime metadata.",
 		"- If a source is unavailable, continue with available sources and keep output content-focused.",
