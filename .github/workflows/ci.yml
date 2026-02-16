@@ -1,0 +1,19 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        with:
+          cache: true
+      - run: mise install
+      - run: mise x -- bun install --frozen-lockfile
+      - run: mise run lint
+      - run: mise run check-types
+      - run: mise run test

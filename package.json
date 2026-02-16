@@ -1,0 +1,49 @@
+{
+	"name": "@shayne/openclaw-temporal-halo",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "OpenClaw temporal HALO.md plugin (always-on context + scheduled dreaming)",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/shayne/openclaw-temporal-halo.git"
+	},
+	"bugs": {
+		"url": "https://github.com/shayne/openclaw-temporal-halo/issues"
+	},
+	"homepage": "https://github.com/shayne/openclaw-temporal-halo#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"*.ts",
+		"tools/**/*.ts",
+		"openclaw.plugin.json",
+		"README.md",
+		"LICENSE"
+	],
+	"dependencies": {
+		"@sinclair/typebox": "0.34.47"
+	},
+	"scripts": {
+		"check-types": "bunx tsc --noEmit",
+		"lint": "bunx @biomejs/biome ci .",
+		"lint:fix": "bunx @biomejs/biome check --write .",
+		"test": "bunx vitest run"
+	},
+	"peerDependencies": {
+		"openclaw": ">=2026.2.14"
+	},
+	"openclaw": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.8",
+		"@types/node": "^22.13.4",
+		"openclaw": "2026.2.14",
+		"typescript": "^5.9.3",
+		"vitest": "^3.0.6"
+	}
+}

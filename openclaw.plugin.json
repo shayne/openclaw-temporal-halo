@@ -1,0 +1,65 @@
+{
+	"id": "openclaw-temporal-halo",
+	"name": "Temporal Halo",
+	"description": "Always-on temporal HALO.md context + cron-driven dreaming",
+	"version": "0.0.0",
+	"uiHints": {
+		"enabled": {
+			"label": "Enabled",
+			"help": "If false, the plugin will not inject HALO or enable dream helpers."
+		},
+		"haloPath": {
+			"label": "HALO.md Path",
+			"placeholder": "~/.openclaw/temporal-halo/HALO.md",
+			"help": "Global HALO document path. Default: ~/.openclaw/temporal-halo/HALO.md"
+		},
+		"dreamMarker": {
+			"label": "Dream Marker",
+			"placeholder": "[temporal-halo:dream]",
+			"help": "If the agent prompt contains this marker, the plugin injects dream instructions."
+		},
+		"maxChars": {
+			"label": "Max HALO chars",
+			"placeholder": "25000",
+			"help": "Hard cap for HALO.md on disk. Publish attempts above this are rejected."
+		},
+		"compactTargetChars": {
+			"label": "Compaction target chars",
+			"placeholder": "20000",
+			"help": "If a publish attempt is oversize, the agent is instructed to compact to this target."
+		},
+		"debug": {
+			"label": "Debug Logging",
+			"help": "Enable verbose logging"
+		}
+	},
+	"configSchema": {
+		"type": "object",
+		"additionalProperties": false,
+		"properties": {
+			"enabled": {
+				"type": "boolean"
+			},
+			"haloPath": {
+				"type": "string"
+			},
+			"dreamMarker": {
+				"type": "string"
+			},
+			"maxChars": {
+				"type": "number",
+				"minimum": 1000,
+				"maximum": 200000
+			},
+			"compactTargetChars": {
+				"type": "number",
+				"minimum": 1000,
+				"maximum": 200000
+			},
+			"debug": {
+				"type": "boolean"
+			}
+		},
+		"required": []
+	}
+}

@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    name: Compute release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      is_tag: ${{ steps.meta.outputs.is_tag }}
+      is_main: ${{ steps.meta.outputs.is_main }}
+      version: ${{ steps.meta.outputs.version }}
+      npm_tag: ${{ steps.meta.outputs.npm_tag }}
+    steps:
+      - name: Build version strings
+        id: meta
+        run: |
+          is_tag=false
+          is_main=false
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then is_tag=true; fi
+          if [ "${GITHUB_REF_NAME:-}" = "main" ]; then is_main=true; fi
+          ts=$(date -u +%Y%m%d%H%M%S)
+          short_sha="${GITHUB_SHA::7}"
+          if [ "$is_tag" = true ]; then
+            version="${GITHUB_REF_NAME#v}"
+            npm_tag="latest"
+          else
+            version="0.0.0-dev.${ts}.${short_sha}"
+            npm_tag="dev"
+          fi
+          echo "is_tag=$is_tag" >> "$GITHUB_OUTPUT"
+          echo "is_main=$is_main" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "npm_tag=$npm_tag" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Lint + typecheck + test
+    runs-on: ubuntu-latest
+    needs: [meta]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+      - run: mise install
+      - run: mise x -- bun install --frozen-lockfile
+      - run: mise run lint
+      - run: mise run check-types
+      - run: mise run test
+
+  publish-npm-prod:
+    name: Publish npm package (prod)
+    runs-on: ubuntu-latest
+    needs: [meta, test]
+    if: needs.meta.outputs.is_tag == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@shayne/openclaw-temporal-halo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node (for npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Upgrade npm for trusted publishing (OIDC)
+        run: |
+          # npm trusted publishing requires npm >= 11.5.1
+          npm --version
+          npm install -g npm@11.5.1
+          npm --version
+      - name: Set release version (from git tag)
+        run: |
+          npm version --no-git-tag-version "${{ needs.meta.outputs.version }}"
+          node tools/sync-plugin-version.js
+      - name: Publish
+        run: npm publish --access public --tag "${{ needs.meta.outputs.npm_tag }}"
+
+  publish-npm-dev:
+    name: Publish npm package (dev)
+    runs-on: ubuntu-latest
+    needs: [meta, test]
+    if: needs.meta.outputs.is_main == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@shayne/openclaw-temporal-halo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node (for npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Upgrade npm for trusted publishing (OIDC)
+        run: |
+          # npm trusted publishing requires npm >= 11.5.1
+          npm --version
+          npm install -g npm@11.5.1
+          npm --version
+      - name: Set dev version
+        run: |
+          npm version --no-git-tag-version "${{ needs.meta.outputs.version }}"
+          node tools/sync-plugin-version.js
+      - name: Publish (dev tag)
+        run: npm publish --access public --tag dev

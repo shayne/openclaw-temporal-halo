@@ -1,0 +1,30 @@
+[tools]
+bun = "1.2.0"
+node = "22.13.1"
+
+[tasks.lint]
+run = "bun run lint"
+
+[tasks.check-types]
+run = "bun run check-types"
+
+[tasks.test]
+run = "bun run test"
+
+[tasks.publish-npm]
+description = "Publish a release to npm from your local machine (requires npm login and publish rights). Set VERSION=x.y.z or tag HEAD as vX.Y.Z."
+run = [
+  "mise run lint",
+  "mise run check-types",
+  "mise run test",
+  "bash -lc 'set -euo pipefail; ver=\"${VERSION:-}\"; if [[ -z \"$ver\" ]]; then tag=$(git describe --tags --exact-match 2>/dev/null || true); if [[ -z \"$tag\" ]]; then echo \"Set VERSION=x.y.z or tag HEAD as vX.Y.Z\" >&2; exit 1; fi; ver=${tag#v}; fi; npm version --no-git-tag-version \"$ver\"; node tools/sync-plugin-version.js; npm publish --access public --tag latest'",
+]
+
+[tasks.publish-npm-dev]
+description = "Publish a dev build to npm with dist-tag dev (requires npm login and publish rights)"
+run = [
+  "mise run lint",
+  "mise run check-types",
+  "mise run test",
+  "bash -lc 'set -euo pipefail; ts=$(date -u +%Y%m%d%H%M%S); short_sha=$(git rev-parse --short=7 HEAD); ver=\"0.0.0-dev.${ts}.${short_sha}\"; npm version --no-git-tag-version \"$ver\"; node tools/sync-plugin-version.js; npm publish --access public --tag dev'",
+]
