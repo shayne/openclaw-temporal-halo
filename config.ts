@@ -5,6 +5,7 @@ export type TemporalHaloConfig = {
 	enabled: boolean
 	haloPath: string
 	dreamMarker: string
+	fullRefreshMarker: string
 	maxChars: number
 	compactTargetChars: number
 	debug: boolean
@@ -14,6 +15,7 @@ const ALLOWED_KEYS = [
 	"enabled",
 	"haloPath",
 	"dreamMarker",
+	"fullRefreshMarker",
 	"maxChars",
 	"compactTargetChars",
 	"debug",
@@ -90,6 +92,10 @@ export function parseConfig(raw: unknown): TemporalHaloConfig {
 			typeof cfg.dreamMarker === "string" && cfg.dreamMarker.trim()
 				? cfg.dreamMarker.trim()
 				: "[temporal-halo:dream]",
+		fullRefreshMarker:
+			typeof cfg.fullRefreshMarker === "string" && cfg.fullRefreshMarker.trim()
+				? cfg.fullRefreshMarker.trim()
+				: "[temporal-halo:full-refresh]",
 		maxChars,
 		compactTargetChars,
 		debug: typeof cfg.debug === "boolean" ? cfg.debug : false,

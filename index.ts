@@ -4,7 +4,7 @@ import {
 	buildDreamInstructions,
 	buildHaloBlock,
 	buildHaloUsageInstructions,
-	isDreamPrompt,
+	detectDreamMode,
 } from "./dream.ts"
 import { readHaloFile } from "./halo.ts"
 import { registerTemporalHaloPublishTool } from "./tools/publish.ts"
@@ -29,7 +29,11 @@ export default {
 			"before_agent_start",
 			async (event: Record<string, unknown>, ctx: Record<string, unknown>) => {
 				const prompt = typeof event.prompt === "string" ? event.prompt : ""
-				const isDream = isDreamPrompt(prompt, cfg.dreamMarker)
+				const dreamMode = detectDreamMode({
+					prompt,
+					dreamMarker: cfg.dreamMarker,
+					fullRefreshMarker: cfg.fullRefreshMarker,
+				})
 
 				let haloText: string | null = null
 				try {
@@ -42,8 +46,8 @@ export default {
 
 				const parts: string[] = []
 				parts.push(buildHaloUsageInstructions(cfg))
-				if (isDream) {
-					parts.push(buildDreamInstructions(cfg))
+				if (dreamMode) {
+					parts.push(buildDreamInstructions(cfg, dreamMode))
 				}
 				parts.push(buildHaloBlock({ haloPath: cfg.haloPath, haloText }))
 

@@ -1,7 +1,23 @@
 import type { TemporalHaloConfig } from "./config.ts"
 
+export type DreamMode = "delta" | "full"
+
 export function isDreamPrompt(prompt: string, marker: string): boolean {
 	return prompt.includes(marker)
+}
+
+export function detectDreamMode(params: {
+	prompt: string
+	dreamMarker: string
+	fullRefreshMarker: string
+}): DreamMode | null {
+	if (params.prompt.includes(params.fullRefreshMarker)) {
+		return "full"
+	}
+	if (params.prompt.includes(params.dreamMarker)) {
+		return "delta"
+	}
+	return null
 }
 
 export function buildHaloUsageInstructions(_cfg: TemporalHaloConfig): string {
@@ -18,7 +34,30 @@ export function buildHaloUsageInstructions(_cfg: TemporalHaloConfig): string {
 	].join("\n")
 }
 
-export function buildDreamInstructions(cfg: TemporalHaloConfig): string {
+function buildDreamModeScopeLines(mode: DreamMode): string[] {
+	if (mode === "full") {
+		return [
+			"Refresh mode: FULL",
+			"- This is an on-demand full refresh/bootstrapping run.",
+			"- You MUST scan at least the last 14 days for past/present signals and the upcoming 60 days for future commitments.",
+			"- Keep significant long-horizon commitments beyond 60 days when they are high-value.",
+		]
+	}
+
+	return [
+		"Refresh mode: DELTA",
+		"- This is a scheduled incremental refresh run.",
+		"- You MUST update HALO using changes since the last successful HALO refresh.",
+		"- Infer a `deltaSince` window from prior HALO/context state; if unknown, fallback to the last 30 minutes.",
+		"- Apply a small overlap (~10 minutes) when querying to avoid missing late-arriving updates.",
+		"- Avoid broad re-scans; only revisit older items when needed to update unresolved loops already in HALO.",
+	]
+}
+
+export function buildDreamInstructions(
+	cfg: TemporalHaloConfig,
+	mode: DreamMode = "delta",
+): string {
 	return [
 		"<temporal-halo:dream>",
 		"You are in Temporal Halo Dream mode.",
@@ -37,6 +76,7 @@ export function buildDreamInstructions(cfg: TemporalHaloConfig): string {
 		"",
 		"Dream workflow:",
 		"You MUST refresh HALO.md from the user's digital life using available tools/skills.",
+		...buildDreamModeScopeLines(mode),
 		"",
 		"Acquisition priority:",
 		"1) Calendar/schedule (today, next 14d, next 60d, plus important long-horizon items)",

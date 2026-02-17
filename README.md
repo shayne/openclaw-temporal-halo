@@ -1,31 +1,16 @@
 # OpenClaw Temporal Halo
 
-Temporal Halo is an OpenClaw plugin that maintains a living markdown document (`HALO.md`) describing your recent past, present, and future. The plugin injects `HALO.md` into every agent turn and provides a scheduled “dream” flow to keep it up to date.
+Temporal Halo is an OpenClaw plugin that maintains a living `HALO.md` and injects it into every agent turn.  
+It is tool/skill agnostic: the prompt tells the agent what to gather, and the agent uses whatever calendar/email/messages tools you already have connected.
 
-This plugin is intentionally tool/skill agnostic: it does not hardcode email/calendar/chat APIs. Instead, a dream run tells the agent what to look for (calendar, email, messages, etc.) and the agent uses whatever tools/skills you have installed and authorized.
-
-## How It Works
-
-- **Always-on context:** `HALO.md` is prepended to every agent turn.
-- **Scheduled dreaming:** OpenClaw cron triggers a dream run that refreshes `HALO.md`.
-- **Guardrails:** the plugin enforces a size budget and will compact and/or skip writes rather than growing without bound.
-
-## Install
+## 1) Installation
 
 ```bash
 openclaw plugins install @shayne/openclaw-temporal-halo
 openclaw plugins enable openclaw-temporal-halo
 ```
 
-## Configure (Optional)
-
-Plugin config lives under `plugins.entries.openclaw-temporal-halo.config` in your OpenClaw config.
-
-Common keys:
-- `haloPath` (default: `~/.openclaw/temporal-halo/HALO.md`)
-- `dreamMarker` (default: `[temporal-halo:dream]`)
-
-Example:
+Optional plugin config (`plugins.entries.openclaw-temporal-halo.config`):
 
 ```json5
 {
@@ -36,6 +21,9 @@ Example:
         config: {
           haloPath: "~/.openclaw/temporal-halo/HALO.md",
           dreamMarker: "[temporal-halo:dream]",
+          fullRefreshMarker: "[temporal-halo:full-refresh]",
+          maxChars: 25000,
+          compactTargetChars: 20000,
         },
       },
     },
@@ -43,74 +31,63 @@ Example:
 }
 ```
 
-## Set Up Dreaming (OpenClaw Cron)
+Recommended immediately after install: run the one-off full refresh in section 3 to bootstrap `HALO.md`.
 
-Temporal Halo uses OpenClaw’s built-in cron scheduler (no OS cron). Any cron message that contains the marker (default `[temporal-halo:dream]`) will run in “dream mode” and refresh `HALO.md`.
+## 2) Set Up Cron Job (30m Delta Refresh)
 
-Recommended: create a repeating **main-session system event** job (every 30 minutes). This keeps dream runs aligned with your main agent context and avoids isolated-session drift. Keep the event text short: the plugin injects the detailed dream instructions automatically.
-
-Dream execution is map/reduce and subagent-first: the main session acts as an orchestrator, fans out focused worker subagents (calendar/email/messages), then fans in concise worker results before publishing `HALO.md`. Because of that, a one-off cron trigger can return before `HALO.md` is fully updated.
-
-Optional (recommended for deeper fan-out): enable nested subagents in OpenClaw so a dream orchestrator can spawn worker subagents.
-
-```json5
-{
-  agents: {
-    defaults: {
-      subagents: {
-        maxSpawnDepth: 2,
-        maxChildrenPerAgent: 5,
-        maxConcurrent: 8,
-      },
-    },
-  },
-}
-```
+Create a recurring main-session system event job:
 
 ```bash
 openclaw cron add \
-  --name "Temporal Halo: Dream" \
+  --name "Temporal Halo: Dream (Delta)" \
   --every "30m" \
   --session main \
   --wake now \
-  --system-event "[temporal-halo:dream] Refresh HALO.md from calendar, email, messages, and recent conversations."
+  --system-event "[temporal-halo:dream] Refresh HALO.md with recent changes."
 ```
 
-## What Dreaming Will Try To Pull In
+Delta mode behavior:
+- Scheduled runs are incremental.
+- Prompt steers the agent to refresh from changes since the last successful HALO refresh.
+- If prior refresh timing is unknown, prompt falls back to about the last 30 minutes with a small overlap to avoid misses.
+- The run remains map/reduce and subagent-first (`sessions_spawn` fan-out/fan-in).
 
-Dream runs are intentionally provider-agnostic. They use whichever tools/skills you’ve connected to gather high-signal, real-world context such as:
+## 3) Run Full Refresh (On-Demand)
 
-- Calendar and schedule (today, next 14 days, next 60 days)
-- Email and receipts (reservations, confirmations, shipments, invoices)
-- Messages and chats (commitments, decisions, open loops)
-- Tasks/notes/docs (if you have tools for them)
+Use this for initial bootstrap and occasional deep refreshes.  
+This is intentionally on-demand (not recurring).
 
-If a source isn’t available (missing tool, missing auth, permissions), the dream prompt instructs the agent to record the gap in `HALO.md` and include “retrieval recipes” so you can fill it in later.
+```bash
+openclaw cron add \
+  --name "Temporal Halo: Full Refresh (One-off)" \
+  --at "+5s" \
+  --delete-after-run \
+  --session main \
+  --wake now \
+  --system-event "[temporal-halo:full-refresh] Rebuild HALO.md from a wider baseline."
+```
 
-## HALO.md Shape (High Level)
+Full refresh behavior:
+- Uses the same map/reduce subagent orchestration.
+- Scans a broader baseline (at least last 14 days) plus upcoming horizons to rebuild `HALO.md`.
 
-`HALO.md` is maintained in a stable, scannable structure so agents can quickly find:
+## Markers
 
-- Present (Now to 24h)
-- Near Future (Next 14d)
-- Medium Future (15–60d)
-- Long Horizon (60d+ important)
-- Recent Past (Last 14d)
-- Retrieval Recipes (tool/skill agnostic pointers)
-- Key Identifiers (full values allowed: confirmations, locators, etc.)
+- Delta marker (scheduled): `[temporal-halo:dream]`
+- Full marker (on-demand): `[temporal-halo:full-refresh]`
 
-## Prompt Sources
+## Prompt Architecture
 
-The exact prompt text is in this repo:
+Delta and full refresh share one base dream prompt; mode-specific scope is added by mode lines in code:
 
-- Dream instructions: [`buildDreamInstructions`](./dream.ts#L20)
-- Usage/injection instructions: [`buildHaloUsageInstructions`](./dream.ts#L7)
+- Dream mode detection: `dream.ts`
+- Shared dream prompt builder: `buildDreamInstructions` in `dream.ts`
+- Mode scope lines (delta vs full): `buildDreamModeScopeLines` in `dream.ts`
 
-## Security Notes
+## Notes
 
-- `HALO.md` may contain sensitive personal identifiers and is injected into every agent turn.
-- Treat this as equivalent to pasting `HALO.md` into every prompt.
-- If you don’t want that, don’t enable this plugin.
+- One-off/cron runs can outlive short CLI timeouts; check run history if needed.
+- `HALO.md` can contain sensitive context and is injected into every turn.
 
 ## License
 

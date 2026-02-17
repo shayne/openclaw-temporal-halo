@@ -8,6 +8,7 @@ describe("parseConfig", () => {
 		expect(cfg.compactTargetChars).toBe(20_000)
 		expect(cfg.haloPath).toContain("HALO.md")
 		expect(cfg.dreamMarker).toBe("[temporal-halo:dream]")
+		expect(cfg.fullRefreshMarker).toBe("[temporal-halo:full-refresh]")
 	})
 
 	it("rejects unknown keys", () => {

@@ -18,6 +18,11 @@
 			"placeholder": "[temporal-halo:dream]",
 			"help": "If the agent prompt contains this marker, the plugin injects dream instructions."
 		},
+		"fullRefreshMarker": {
+			"label": "Full Refresh Marker",
+			"placeholder": "[temporal-halo:full-refresh]",
+			"help": "If the prompt contains this marker, the plugin injects on-demand full refresh instructions."
+		},
 		"maxChars": {
 			"label": "Max HALO chars",
 			"placeholder": "25000",
@@ -44,6 +49,9 @@
 				"type": "string"
 			},
 			"dreamMarker": {
+				"type": "string"
+			},
+			"fullRefreshMarker": {
 				"type": "string"
 			},
 			"maxChars": {
