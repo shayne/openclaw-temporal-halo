@@ -58,6 +58,10 @@ describe("buildDreamInstructions", () => {
 		const cfg = parseConfig({})
 		const instructions = buildDreamInstructions(cfg)
 
+		expect(instructions).toContain("Subagent announce handling (MUST):")
+		expect(instructions).toContain("reply exactly: NO_REPLY")
+		expect(instructions).toContain("Only the final fan-in step")
+		expect(instructions).toContain("at most one proactive message")
 		expect(instructions).toContain("Proactive user message policy (MUST):")
 		expect(instructions).toContain(
 			"Default: send no user-facing message after HALO publish.",
@@ -100,6 +104,13 @@ describe("buildHaloUsageInstructions", () => {
 
 		expect(usage).toContain("temporal map of the user's real life")
 		expect(usage).toContain("Do not treat HALO.md as a metadata dump")
+		expect(usage).toContain(
+			"Treat subagent completion system messages as internal orchestration context.",
+		)
+		expect(usage).toContain("reply exactly: NO_REPLY")
+		expect(usage).toContain(
+			"Never send user-facing updates that only report no changes",
+		)
 	})
 })
 
