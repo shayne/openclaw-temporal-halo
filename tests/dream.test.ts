@@ -54,6 +54,22 @@ describe("buildDreamInstructions", () => {
 		)
 	})
 
+	it("enforces urgent-only proactive messaging with distilled output", () => {
+		const cfg = parseConfig({})
+		const instructions = buildDreamInstructions(cfg)
+
+		expect(instructions).toContain("Proactive user message policy (MUST):")
+		expect(instructions).toContain(
+			"Default: send no user-facing message after HALO publish.",
+		)
+		expect(instructions).toContain("Practical action-set changed")
+		expect(instructions).toContain(
+			"Suppress duplicate themes for 12h (source + thread/event id + normalized topic).",
+		)
+		expect(instructions).toContain("Max 3 bullets and <=450 chars total.")
+		expect(instructions).toContain("NEVER include operational/meta text")
+	})
+
 	it("includes delta-mode guidance for scheduled refreshes", () => {
 		const cfg = parseConfig({})
 		const instructions = buildDreamInstructions(cfg, "delta")
