@@ -80,6 +80,7 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).not.toContain("New change:")
 		expect(instructions).not.toContain("Why now:")
 		expect(instructions).not.toContain("Do now:")
+		expect(instructions).toContain("Never emit NO_CHANGES")
 		expect(instructions).not.toContain("NO_MATERIAL_DELTA")
 		expect(instructions).not.toContain("Subagent ... finished")
 		expect(instructions).toContain("NEVER include operational/meta text")
@@ -122,6 +123,7 @@ describe("buildHaloUsageInstructions", () => {
 		expect(usage).toContain(
 			"Never emit internal status markers in user-facing content.",
 		)
+		expect(usage).toContain("Never emit NO_CHANGES")
 		expect(usage).not.toContain("NO_MATERIAL_DELTA")
 		expect(usage).toContain(
 			"Never send user-facing updates that only report no changes",
