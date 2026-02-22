@@ -70,7 +70,18 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain(
 			"Suppress duplicate themes for 12h (source + thread/event id + normalized topic).",
 		)
-		expect(instructions).toContain("Max 3 bullets and <=450 chars total.")
+		expect(instructions).toContain(
+			"1 short paragraph (1-2 sentences) and <=320 chars total.",
+		)
+		expect(instructions).toContain("Use natural conversational language.")
+		expect(instructions).toContain(
+			"Avoid rigid templates or machine-style labels.",
+		)
+		expect(instructions).not.toContain("New change:")
+		expect(instructions).not.toContain("Why now:")
+		expect(instructions).not.toContain("Do now:")
+		expect(instructions).not.toContain("NO_MATERIAL_DELTA")
+		expect(instructions).not.toContain("Subagent ... finished")
 		expect(instructions).toContain("NEVER include operational/meta text")
 	})
 
@@ -108,6 +119,10 @@ describe("buildHaloUsageInstructions", () => {
 			"Treat subagent completion system messages as internal orchestration context.",
 		)
 		expect(usage).toContain("reply exactly: NO_REPLY")
+		expect(usage).toContain(
+			"Never emit internal status markers in user-facing content.",
+		)
+		expect(usage).not.toContain("NO_MATERIAL_DELTA")
 		expect(usage).toContain(
 			"Never send user-facing updates that only report no changes",
 		)
