@@ -77,6 +77,21 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain(
 			"Avoid rigid templates or machine-style labels.",
 		)
+		expect(instructions).toContain(
+			"Routine receipts, order confirmations, shipment updates, and delivery confirmations belong in HALO only",
+		)
+		expect(instructions).toContain(
+			"Do not message about internal timeouts, retries, or worker/runtime failures",
+		)
+		expect(instructions).toContain(
+			"When in doubt, keep it in HALO and do not interrupt the user.",
+		)
+		expect(instructions).toContain(
+			"Avoid quoting raw source metadata like tracking numbers, full street addresses, payment splits, mailbox paths, message ids, or tool/session labels",
+		)
+		expect(instructions).toContain(
+			"Sound like a discreet personal assistant or EA",
+		)
 		expect(instructions).not.toContain("New change:")
 		expect(instructions).not.toContain("Why now:")
 		expect(instructions).not.toContain("Do now:")
@@ -122,6 +137,9 @@ describe("buildHaloUsageInstructions", () => {
 		expect(usage).toContain("reply exactly: NO_REPLY")
 		expect(usage).toContain(
 			"Never emit internal status markers in user-facing content.",
+		)
+		expect(usage).toContain(
+			"Never expose internal workflow labels like subagent, cron, session, timeout, signal, archive, or tool/runtime status to the user.",
 		)
 		expect(usage).toContain("Never emit NO_CHANGES")
 		expect(usage).not.toContain("NO_MATERIAL_DELTA")
