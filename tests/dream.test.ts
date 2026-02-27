@@ -92,6 +92,16 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain(
 			"Sound like a discreet personal assistant or EA",
 		)
+		expect(instructions).toContain("Zero-delta scan summaries MUST stay silent")
+		expect(instructions).toContain(
+			"If a draft says 'no new', 'none found', 'already tracked', or only summarizes what sources/windows were checked, replace it with NO_REPLY.",
+		)
+		expect(instructions).toContain(
+			"Examples that MUST be suppressed: 'No new user-impacting email deltas found', 'No new emails in the 21:12-21:52 window', and 'latest qualifying changes remain already tracked'.",
+		)
+		expect(instructions).toContain(
+			"Never mention scan windows, mailbox names, latest seen IDs, query predicates, or source-audit details in user-facing text.",
+		)
 		expect(instructions).not.toContain("New change:")
 		expect(instructions).not.toContain("Why now:")
 		expect(instructions).not.toContain("Do now:")
@@ -140,6 +150,12 @@ describe("buildHaloUsageInstructions", () => {
 		)
 		expect(usage).toContain(
 			"Never expose internal workflow labels like subagent, cron, session, timeout, signal, archive, or tool/runtime status to the user.",
+		)
+		expect(usage).toContain(
+			"If the content only says nothing new happened or only recounts what sources/windows were checked, reply exactly: NO_REPLY.",
+		)
+		expect(usage).toContain(
+			"Examples that MUST become NO_REPLY: 'No user-impacting email deltas found', 'None found', 'No new emails in the window', or 'latest qualifying changes remain already tracked'.",
 		)
 		expect(usage).toContain("Never emit NO_CHANGES")
 		expect(usage).not.toContain("NO_MATERIAL_DELTA")
