@@ -13,7 +13,9 @@ describe("buildDreamInstructions", () => {
 
 		expect(instructions).toContain("A scheduled reminder has been triggered")
 		expect(instructions).toContain("Do not send a reminder-style reply")
-		expect(instructions).toContain("You MUST call `temporal_halo_publish`")
+		expect(instructions).not.toContain(
+			"You MUST gather context and publish an updated HALO.md in this run.",
+		)
 	})
 
 	it("requires map/reduce fan-out with worker budgets before publish", () => {
@@ -59,6 +61,22 @@ describe("buildDreamInstructions", () => {
 		const instructions = buildDreamInstructions(cfg)
 
 		expect(instructions).toContain("Subagent announce handling (MUST):")
+		expect(instructions).toContain(
+			'Spawn dream workers with `completionMode: "internal"`.',
+		)
+		expect(instructions).toContain(
+			"Workers should return either substantive findings or exact `NO_REPLY`.",
+		)
+		expect(instructions).toContain("Final fan-in truth table:")
+		expect(instructions).toContain(
+			"- low: do not write HALO.md; reply exactly: NO_REPLY.",
+		)
+		expect(instructions).toContain(
+			"- medium: publish updated HALO.md silently; reply exactly: NO_REPLY.",
+		)
+		expect(instructions).toContain(
+			"- important: publish updated HALO.md, then send one proactive message.",
+		)
 		expect(instructions).toContain("reply exactly: NO_REPLY")
 		expect(instructions).toContain("Only the final fan-in step")
 		expect(instructions).toContain("at most one proactive message")
@@ -117,10 +135,11 @@ describe("buildDreamInstructions", () => {
 
 		expect(instructions).toContain("Refresh mode: DELTA")
 		expect(instructions).toContain(
-			"update HALO using changes since the last successful HALO refresh",
+			"anchor the next delta query from the newest visible dream wake/completion timestamp",
 		)
 		expect(instructions).toContain("fallback to the last 30 minutes")
 		expect(instructions).toContain("Apply a small overlap")
+		expect(instructions).not.toContain("last successful HALO refresh")
 	})
 
 	it("includes full-mode guidance for on-demand baseline rebuilds", () => {
@@ -141,6 +160,15 @@ describe("buildHaloUsageInstructions", () => {
 
 		expect(usage).toContain("temporal map of the user's real life")
 		expect(usage).toContain("Do not treat HALO.md as a metadata dump")
+		expect(usage).toContain(
+			"Low-value findings stay out of HALO.md and user-facing messages.",
+		)
+		expect(usage).toContain(
+			"Medium-value findings belong in HALO.md without messaging the user.",
+		)
+		expect(usage).toContain(
+			"Important findings update HALO.md and may send one proactive message.",
+		)
 		expect(usage).toContain(
 			"Treat subagent completion system messages as internal orchestration context.",
 		)
