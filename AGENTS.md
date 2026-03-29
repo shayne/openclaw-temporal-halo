@@ -22,6 +22,10 @@ This repository is public. Do not add personal data, real identifiers, or machin
 - Local publish (manual fallback): `mise run publish-npm`
 - CI publish (preferred): GitHub Actions Trusted Publishing via `.github/workflows/release.yml`
   - Do not add npm tokens to repo secrets.
+- Versioning source of truth is the git ref, not committed package metadata:
+  - pushes to `main` publish a timestamped `0.0.0-dev.*` package from workflow-generated version metadata
+  - `vX.Y.Z` git tags publish the production `X.Y.Z` package
+  - keep `package.json` and `openclaw.plugin.json` on their checked-in baseline unless the workflow strategy itself changes
 
 ## OpenClaw Runtime Maintenance
 

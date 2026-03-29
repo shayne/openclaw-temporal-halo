@@ -88,6 +88,22 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain(
 			"Suppress duplicate themes for 12h (source + thread/event id + normalized topic).",
 		)
+		expect(instructions).toContain("Delta audit rules (MUST):")
+		expect(instructions).toContain(
+			"A candidate item is a real delta only if at least one of these changed:",
+		)
+		expect(instructions).toContain(
+			"Do NOT treat these alone as a delta: rewording, reprioritization/reranking, time passage alone, or repeating the same unchanged action-set.",
+		)
+		expect(instructions).toContain(
+			"If the practical action-set is unchanged from what HALO or recent dream/session context already surfaced, suppress it.",
+		)
+		expect(instructions).toContain(
+			"Critical reminder exception: you MAY repeat an unchanged item only when it is both critical and imminent (<=24h) or already overdue",
+		)
+		expect(instructions).toContain(
+			"Never resend medium or important reminders just because they still matter; resend only when the facts/action-set changed or the critical reminder exception clearly applies.",
+		)
 		expect(instructions).toContain(
 			"1 short paragraph (1-2 sentences) and <=320 chars total.",
 		)
@@ -137,6 +153,9 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain(
 			"anchor the next delta query from the newest visible dream wake/completion timestamp",
 		)
+		expect(instructions).toContain(
+			"Use HALO.md plus recent dream/session context as the comparison baseline for whether a candidate action-set is already known.",
+		)
 		expect(instructions).toContain("fallback to the last 30 minutes")
 		expect(instructions).toContain("Apply a small overlap")
 		expect(instructions).not.toContain("last successful HALO refresh")
@@ -184,6 +203,12 @@ describe("buildHaloUsageInstructions", () => {
 		)
 		expect(usage).toContain(
 			"Examples that MUST become NO_REPLY: 'No user-impacting email deltas found', 'None found', 'No new emails in the window', or 'latest qualifying changes remain already tracked'.",
+		)
+		expect(usage).toContain(
+			"Do not treat the same facts with the same practical action-set as a new delta just because they were re-ranked, reworded, or are still unresolved.",
+		)
+		expect(usage).toContain(
+			"Repeat an unchanged item only if it is both critical and imminent/overdue and failing to remind the user now could plausibly cause harm or immediate disruption.",
 		)
 		expect(usage).toContain("Never emit NO_CHANGES")
 		expect(usage).not.toContain("NO_MATERIAL_DELTA")
