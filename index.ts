@@ -3,10 +3,11 @@ import { parseConfig, temporalHaloConfigSchema } from "./config.ts"
 import {
 	buildDreamInstructions,
 	buildHaloBlock,
+	buildHaloDeltaBlock,
 	buildHaloUsageInstructions,
 	detectDreamMode,
 } from "./dream.ts"
-import { readHaloFile } from "./halo.ts"
+import { readHaloFile, resolveHaloDeltaPath } from "./halo.ts"
 import { registerTemporalHaloPublishTool } from "./tools/publish.ts"
 
 export default {
@@ -44,10 +45,30 @@ export default {
 					)
 				}
 
+				let haloDeltaText: string | null = null
+				const haloDeltaPath = resolveHaloDeltaPath(cfg.haloPath)
+				if (dreamMode === "delta") {
+					try {
+						haloDeltaText = await readHaloFile(haloDeltaPath)
+					} catch (err) {
+						api.logger.warn(
+							`temporal-halo: failed reading HALO.delta.md: ${String(err)}`,
+						)
+					}
+				}
+
 				const parts: string[] = []
 				parts.push(buildHaloUsageInstructions(cfg))
 				if (dreamMode) {
 					parts.push(buildDreamInstructions(cfg, dreamMode))
+				}
+				if (dreamMode === "delta") {
+					parts.push(
+						buildHaloDeltaBlock({
+							haloDeltaPath,
+							haloDeltaText,
+						}),
+					)
 				}
 				parts.push(buildHaloBlock({ haloPath: cfg.haloPath, haloText }))
 

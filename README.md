@@ -1,6 +1,6 @@
 # OpenClaw Temporal Halo
 
-Temporal Halo is an OpenClaw plugin that maintains a living `HALO.md` and injects it into every agent turn.  
+Temporal Halo is an OpenClaw plugin that maintains a living `HALO.md`, writes a compact `HALO.delta.md` sidecar for incremental refreshes, and injects current temporal context into each agent turn.
 It is tool/skill agnostic: the prompt tells the agent what to gather, and the agent uses whatever calendar/email/messages tools you already have connected.
 
 ## 1) Installation
@@ -48,8 +48,10 @@ openclaw cron add \
 
 Delta mode behavior:
 - Scheduled runs are incremental.
-- Prompt steers the agent to refresh from changes since the last successful HALO refresh.
+- Prompt steers the agent to use the `HALO.delta.md` sidecar as the first-pass change ledger, then fall back to the full `HALO.md` snapshot only when needed.
 - If prior refresh timing is unknown, prompt falls back to about the last 30 minutes with a small overlap to avoid misses.
+- Each medium/important publish can write both a refreshed `HALO.md` snapshot and a compact `HALO.delta.md` summary with added, updated, retired, and still-open items.
+- Prompt steers the agent to retire stale bullets when they are resolved, expired, superseded, duplicated by fresher facts, or no longer useful for likely user action/disambiguation.
 - The run remains map/reduce and subagent-first (`sessions_spawn` fan-out/fan-in).
 
 ## 3) Run Full Refresh (On-Demand)
@@ -82,12 +84,13 @@ Delta and full refresh share one base dream prompt; mode-specific scope is added
 
 - Dream mode detection: `dream.ts`
 - Shared dream prompt builder: `buildDreamInstructions` in `dream.ts`
+- Sidecar delta context block: `buildHaloDeltaBlock` in `dream.ts`
 - Mode scope lines (delta vs full): `buildDreamModeScopeLines` in `dream.ts`
 
 ## Notes
 
 - One-off/cron runs can outlive short CLI timeouts; check run history if needed.
-- `HALO.md` can contain sensitive context and is injected into every turn.
+- `HALO.md` and `HALO.delta.md` can contain sensitive context. The full `HALO.md` snapshot is injected into each turn; `HALO.delta.md` is injected only for delta dream runs.
 
 ## License
 

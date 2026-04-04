@@ -4,6 +4,7 @@ import path from "node:path"
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk"
 import { describe, expect, it, vi } from "vitest"
 import type { TemporalHaloConfig } from "../config.ts"
+import { resolveHaloDeltaPath } from "../halo.ts"
 import {
 	createTemporalHaloPublishTool,
 	resolveWarningSessionKey,
@@ -136,6 +137,7 @@ describe("temporal_halo_publish", () => {
 	it("writes when within limit", async () => {
 		const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "halo-"))
 		const haloPath = path.join(tmpDir, "HALO.md")
+		const haloDeltaPath = resolveHaloDeltaPath(haloPath)
 
 		const api = makeApiMock()
 		const cfg: TemporalHaloConfig = {
@@ -158,8 +160,70 @@ describe("temporal_halo_publish", () => {
 		})
 
 		const md = "# HALO\n\nok\n"
-		const res = await tool.execute("t1", { markdown: md })
+		const deltaMd = [
+			"# Temporal Halo Delta",
+			"",
+			"## Added",
+			"- New appointment tomorrow. [calendar:event-1]",
+			"",
+			"## Retired",
+			"- Old resolved security alert no longer changes likely user action. [email:thread-2]",
+			"",
+			"## Still Open",
+			"- Tax payment remains due Apr 15. [email:thread-3]",
+			"",
+		].join("\n")
+
+		const res = await tool.execute("t1", {
+			markdown: md,
+			deltaMarkdown: deltaMd,
+		})
 		expect(res.details).toMatchObject({ ok: true, published: true })
 		expect(await fs.readFile(haloPath, "utf-8")).toBe(md.trimEnd())
+		expect(res.details).toMatchObject({
+			ok: true,
+			published: true,
+			deltaPath: haloDeltaPath,
+			deltaChars: deltaMd.trimEnd().length,
+		})
+		expect(await fs.readFile(haloDeltaPath, "utf-8")).toBe(deltaMd.trimEnd())
+	})
+
+	it("does not write a stale sidecar when delta markdown is omitted", async () => {
+		const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "halo-"))
+		const haloPath = path.join(tmpDir, "HALO.md")
+		const haloDeltaPath = resolveHaloDeltaPath(haloPath)
+		await fs.writeFile(haloDeltaPath, "# Temporal Halo Delta\n\nold", "utf-8")
+
+		const api = makeApiMock()
+		const cfg: TemporalHaloConfig = {
+			enabled: true,
+			haloPath,
+			dreamMarker: "[temporal-halo:dream]",
+			fullRefreshMarker: "[temporal-halo:full-refresh]",
+			maxChars: 25_000,
+			compactTargetChars: 20_000,
+			debug: false,
+		}
+
+		const tool = createTemporalHaloPublishTool({
+			api,
+			cfg,
+			toolCtx: {
+				config: { session: { mainKey: "main" } } as never,
+				agentId: "main",
+			},
+		})
+
+		const res = await tool.execute("t1", { markdown: "# HALO\n\nok\n" })
+		expect(res.details).toMatchObject({
+			ok: true,
+			published: true,
+			deltaPath: haloDeltaPath,
+			deltaChars: 0,
+		})
+		await expect(fs.readFile(haloDeltaPath, "utf-8")).rejects.toMatchObject({
+			code: "ENOENT",
+		})
 	})
 })

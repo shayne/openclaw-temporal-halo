@@ -1,7 +1,11 @@
 import { Type } from "@sinclair/typebox"
 import type { AnyAgentTool, OpenClawPluginApi } from "openclaw/plugin-sdk"
 import type { TemporalHaloConfig } from "../config.ts"
-import { writeHaloAtomic } from "../halo.ts"
+import {
+	removeHaloFile,
+	resolveHaloDeltaPath,
+	writeHaloAtomic,
+} from "../halo.ts"
 
 type RegisteredTool = Parameters<OpenClawPluginApi["registerTool"]>[0]
 type ExtractFn<T> = T extends (...args: infer Args) => infer Result
@@ -78,8 +82,17 @@ export function createTemporalHaloPublishTool(params: {
 			markdown: Type.String({
 				description: "Full markdown content for HALO.md",
 			}),
+			deltaMarkdown: Type.Optional(
+				Type.String({
+					description:
+						"Compact markdown delta summary for this publish (added, updated, retired, still-open)",
+				}),
+			),
 		}),
-		async execute(_toolCallId: string, args: { markdown: string }) {
+		async execute(
+			_toolCallId: string,
+			args: { markdown: string; deltaMarkdown?: string },
+		) {
 			const markdown = typeof args.markdown === "string" ? args.markdown : ""
 			const trimmed = markdown.trimEnd()
 			if (!trimmed.trim()) {
@@ -158,6 +171,15 @@ export function createTemporalHaloPublishTool(params: {
 			}
 
 			await writeHaloAtomic(params.cfg.haloPath, trimmed)
+			const deltaPath = resolveHaloDeltaPath(params.cfg.haloPath)
+			const deltaMarkdown =
+				typeof args.deltaMarkdown === "string" ? args.deltaMarkdown : ""
+			const trimmedDelta = deltaMarkdown.trimEnd()
+			if (trimmedDelta.trim()) {
+				await writeHaloAtomic(deltaPath, trimmedDelta)
+			} else {
+				await removeHaloFile(deltaPath)
+			}
 			oversizeAttempts = 0
 
 			return {
@@ -172,6 +194,8 @@ export function createTemporalHaloPublishTool(params: {
 					published: true,
 					path: params.cfg.haloPath,
 					chars,
+					deltaPath,
+					deltaChars: trimmedDelta.trim().length > 0 ? trimmedDelta.length : 0,
 				},
 			}
 		},

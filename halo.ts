@@ -2,6 +2,14 @@ import { randomUUID } from "node:crypto"
 import fs from "node:fs/promises"
 import path from "node:path"
 
+export function resolveHaloDeltaPath(filePath: string): string {
+	const dir = path.dirname(filePath)
+	const ext = path.extname(filePath)
+	const base = path.basename(filePath, ext)
+	const deltaName = ext ? `${base}.delta${ext}` : `${base}.delta.md`
+	return path.join(dir, deltaName)
+}
+
 export async function readHaloFile(filePath: string): Promise<string | null> {
 	try {
 		return await fs.readFile(filePath, "utf-8")
@@ -12,6 +20,10 @@ export async function readHaloFile(filePath: string): Promise<string | null> {
 		}
 		throw err
 	}
+}
+
+export async function removeHaloFile(filePath: string): Promise<void> {
+	await fs.rm(filePath, { force: true })
 }
 
 async function renameOverwriting(

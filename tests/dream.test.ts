@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { parseConfig } from "../config.ts"
 import {
 	buildDreamInstructions,
+	buildHaloDeltaBlock,
 	buildHaloUsageInstructions,
 	detectDreamMode,
 } from "../dream.ts"
@@ -154,6 +155,9 @@ describe("buildDreamInstructions", () => {
 			"anchor the next delta query from the newest visible dream wake/completion timestamp",
 		)
 		expect(instructions).toContain(
+			"Use the HALO delta sidecar as the first-pass comparison ledger before rereading the full HALO snapshot.",
+		)
+		expect(instructions).toContain(
 			"Use HALO.md plus recent dream/session context as the comparison baseline for whether a candidate action-set is already known.",
 		)
 		expect(instructions).toContain("fallback to the last 30 minutes")
@@ -169,6 +173,25 @@ describe("buildDreamInstructions", () => {
 		expect(instructions).toContain("on-demand full refresh/bootstrapping run")
 		expect(instructions).toContain("scan at least the last 14 days")
 		expect(instructions).toContain("upcoming 60 days")
+	})
+
+	it("requires stale-item retirement and sidecar delta publishing", () => {
+		const cfg = parseConfig({})
+		const instructions = buildDreamInstructions(cfg, "delta")
+
+		expect(instructions).toContain("HALO maintenance rules (MUST):")
+		expect(instructions).toContain(
+			"Retire HALO bullets when they are resolved, expired, superseded, duplicated by a fresher fact, or no longer materially change likely user action/disambiguation.",
+		)
+		expect(instructions).toContain(
+			"Do not keep stale-but-familiar bullets just because they were once important.",
+		)
+		expect(instructions).toContain("HALO delta sidecar template")
+		expect(instructions).toContain("## Retired")
+		expect(instructions).toContain("## Still Open")
+		expect(instructions).toContain(
+			"Call `temporal_halo_publish` with both `markdown` and `deltaMarkdown`.",
+		)
 	})
 })
 
@@ -208,12 +231,42 @@ describe("buildHaloUsageInstructions", () => {
 			"Do not treat the same facts with the same practical action-set as a new delta just because they were re-ranked, reworded, or are still unresolved.",
 		)
 		expect(usage).toContain(
+			"Treat stale HALO bullets as candidates for retirement when they no longer affect what the user should do or how an ambiguous request should be interpreted.",
+		)
+		expect(usage).toContain(
 			"Repeat an unchanged item only if it is both critical and imminent/overdue and failing to remind the user now could plausibly cause harm or immediate disruption.",
 		)
 		expect(usage).toContain("Never emit NO_CHANGES")
 		expect(usage).not.toContain("NO_MATERIAL_DELTA")
 		expect(usage).toContain(
 			"Never send user-facing updates that only report no changes",
+		)
+	})
+})
+
+describe("buildHaloDeltaBlock", () => {
+	it("wraps the compact delta sidecar when present", () => {
+		const block = buildHaloDeltaBlock({
+			haloDeltaPath: "HALO.delta.md",
+			haloDeltaText: "# Temporal Halo Delta\n\n## Added\n- New item",
+		})
+
+		expect(block).toContain("<temporal-halo:delta>")
+		expect(block).toContain("Path: HALO.delta.md")
+		expect(block).toContain("----- HALO.delta.md BEGIN -----")
+		expect(block).toContain("## Added")
+		expect(block).toContain("----- HALO.delta.md END -----")
+	})
+
+	it("returns a missing-sidecar note when no delta file exists yet", () => {
+		const block = buildHaloDeltaBlock({
+			haloDeltaPath: "HALO.delta.md",
+			haloDeltaText: null,
+		})
+
+		expect(block).toContain("HALO.delta.md not found (yet): HALO.delta.md")
+		expect(block).toContain(
+			"Use the full HALO snapshot as the fallback baseline for this run.",
 		)
 	})
 })
